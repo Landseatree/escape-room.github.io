@@ -1,0 +1,553 @@
+/* ===========================================================
+   謎解きウェブサイト ― 脱出の扉
+   トークン
+   色: 闇 #0A0E14 / 紙 #EDE6D6 / 琥珀(アンバー) #E8A23D
+       朱(警告) #B91C2C / 群青(脱落) #1E3A8A / 緋(誤答) #FF3B30
+   書体: 見出し Shippori Mincho / 本文・UI Noto Sans JP
+=========================================================== */
+
+:root {
+  --ink: #0A0E14;
+  --ink-soft: #141A24;
+  --paper: #EDE6D6;
+  --paper-dim: #C9BFA8;
+  --amber: #E8A23D;
+  --amber-dim: #8A621F;
+  --crimson: #B91C2C;
+  --crimson-deep: #7A0F1C;
+  --indigo: #1E3A8A;
+  --indigo-deep: #0F1F4D;
+  --wrong: #FF3B30;
+  --line: rgba(237, 230, 214, 0.14);
+
+  --font-display: 'Shippori Mincho', serif;
+  --font-body: 'Noto Sans JP', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-body);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===========================================================
+   画面切り替え基盤
+=========================================================== */
+.screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  opacity: 0;
+}
+
+.screen--active {
+  display: flex;
+  opacity: 1;
+  animation: screenIn 0.5s ease forwards;
+}
+
+@keyframes screenIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===========================================================
+   画面1: 待機画面
+=========================================================== */
+#screen-wait {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(232, 162, 61, 0.08), transparent 60%),
+    var(--ink);
+  position: fixed;
+  overflow: hidden;
+}
+
+.wait__bg-rune {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 70vh;
+  font-weight: 700;
+  color: rgba(232, 162, 61, 0.035);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.wait__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 4vh 4vw;
+}
+
+.wait__eyebrow {
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  letter-spacing: 0.4em;
+  color: var(--amber);
+  margin: 0 0 1.2rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.wait__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 1rem;
+  color: var(--paper);
+  letter-spacing: 0.05em;
+}
+
+.wait__sub {
+  font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+  color: var(--paper-dim);
+  margin: 0 0 5vh;
+  letter-spacing: 0.05em;
+}
+
+.wait__doors {
+  display: flex;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding: clamp(1.2rem, 2vw, 2rem);
+  border-radius: 4px;
+  transition: transform 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.door:active {
+  transform: scale(0.95);
+}
+
+.door__frame {
+  width: clamp(80px, 11vw, 130px);
+  height: clamp(110px, 15vw, 175px);
+  border: 3px solid var(--amber-dim);
+  border-radius: 4px 4px 60px 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(232,162,61,0.06), transparent);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  position: relative;
+}
+
+.door__frame::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(232, 162, 61, 0.18);
+  border-radius: 2px 2px 50px 50px;
+}
+
+.door:hover .door__frame,
+.door:focus-visible .door__frame {
+  border-color: var(--amber);
+  box-shadow: 0 0 28px rgba(232, 162, 61, 0.35);
+  background: linear-gradient(180deg, rgba(232,162,61,0.14), transparent);
+}
+
+.door:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
+}
+
+.door__num {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.door__label {
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  font-weight: 700;
+  color: var(--paper);
+  letter-spacing: 0.08em;
+}
+
+.door__time {
+  font-size: clamp(0.7rem, 1vw, 0.85rem);
+  color: var(--paper-dim);
+  letter-spacing: 0.03em;
+}
+
+/* ===========================================================
+   画面2: 問題画面
+=========================================================== */
+#screen-question {
+  background: var(--ink);
+}
+
+.qscreen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  padding: clamp(1rem, 2.2vw, 2rem);
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+}
+
+.qscreen__left {
+  flex: 1.15;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.qscreen__right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: clamp(0.8rem, 1.6vw, 1.4rem);
+}
+
+/* タイマー: 左上に重ならず配置、問題画像の上に余白を作って固定 */
+.timer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(72px, 8vw, 100px);
+  height: clamp(72px, 8vw, 100px);
+  z-index: 5;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+
+.timer__ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer__ring-bg {
+  fill: var(--ink-soft);
+  stroke: rgba(237, 230, 214, 0.12);
+  stroke-width: 6;
+}
+
+.timer__ring-fg {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 326.7;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.4s ease;
+}
+
+.timer__num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.2rem, 1.8vw, 1.7rem);
+  color: var(--paper);
+}
+
+.timer--warning .timer__ring-fg { stroke: var(--wrong); }
+.timer--warning .timer__num { color: var(--wrong); }
+.timer--pulse { animation: timerPulse 1s ease-in-out infinite; }
+
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.qimage-wrap {
+  flex: 1;
+  margin-top: clamp(80px, 9vw, 112px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.qimage {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* 解答欄 */
+.answer-box {
+  height: clamp(56px, 8vh, 80px);
+  border: 2px solid var(--amber-dim);
+  border-radius: 6px;
+  background: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  padding: 0 1.2rem;
+  font-size: clamp(1.3rem, 2.6vw, 2rem);
+  letter-spacing: 0.15em;
+  font-weight: 500;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.answer-box__placeholder {
+  color: var(--paper-dim);
+  opacity: 0.5;
+  font-size: 0.55em;
+  letter-spacing: 0.1em;
+  position: absolute;
+}
+
+.answer-box__text:not(:empty) ~ .answer-box__placeholder,
+.answer-box__text:not(:empty) + .answer-box__caret {
+  display: none;
+}
+.answer-box:has(.answer-box__text:not(:empty)) .answer-box__placeholder {
+  display: none;
+}
+
+.answer-box__text {
+  color: var(--paper);
+}
+
+.answer-box__caret {
+  width: 2px;
+  height: 1em;
+  background: var(--amber);
+  margin-left: 2px;
+  animation: caretBlink 1s step-end infinite;
+}
+
+@keyframes caretBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* キーパッド: ひらがな5列 + 1文字削除 + 確定 */
+.keypad {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-auto-rows: 1fr;
+  gap: clamp(4px, 0.6vw, 8px);
+  min-height: 0;
+}
+
+.key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--paper);
+  font-size: clamp(0.95rem, 1.8vw, 1.4rem);
+  font-weight: 500;
+  transition: background 0.12s ease, transform 0.08s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.key:active {
+  background: var(--amber-dim);
+  transform: scale(0.93);
+}
+
+.key--del {
+  color: var(--paper-dim);
+  font-size: clamp(0.8rem, 1.4vw, 1.05rem);
+  letter-spacing: 0.02em;
+}
+
+.key--enter {
+  background: rgba(232, 162, 61, 0.14);
+  border-color: var(--amber-dim);
+  color: var(--amber);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.key--enter:active {
+  background: var(--amber);
+  color: var(--ink);
+}
+
+/* 不正解マーク */
+.wrongmark {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 20, 0.55);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.wrongmark--show {
+  display: flex;
+  animation: wrongFlash 0.25s ease;
+}
+
+@keyframes wrongFlash {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.wrongmark__x {
+  font-family: var(--font-display);
+  font-size: clamp(8rem, 22vw, 16rem);
+  font-weight: 700;
+  color: var(--wrong);
+  text-shadow: 0 0 60px rgba(255, 59, 48, 0.6);
+  animation: wrongPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes wrongPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===========================================================
+   画面3 / 4: 結果画面
+=========================================================== */
+.result {
+  align-items: center;
+  justify-content: center;
+}
+
+.result__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.result__mark {
+  font-family: var(--font-display);
+  font-size: clamp(7rem, 18vw, 14rem);
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.result__text {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  color: #FFFFFF;
+  text-align: center;
+  line-height: 1.5;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.result--correct {
+  background: var(--crimson);
+  background-image: radial-gradient(ellipse at 50% 40%, var(--crimson) 0%, var(--crimson-deep) 100%);
+  animation: resultPulseRed 2s ease-in-out infinite, screenIn 0.4s ease forwards;
+}
+
+.result--fail {
+  background: var(--indigo);
+  background-image: radial-gradient(ellipse at 50% 40%, var(--indigo) 0%, var(--indigo-deep) 100%);
+  animation: resultPulseBlue 2s ease-in-out infinite, screenIn 0.4s ease forwards;
+}
+
+@keyframes resultPulseRed {
+  0%, 100% { background-color: var(--crimson); }
+  50% { background-color: var(--crimson-deep); }
+}
+
+@keyframes resultPulseBlue {
+  0%, 100% { background-color: var(--indigo); }
+  50% { background-color: var(--indigo-deep); }
+}
+
+/* ===========================================================
+   レスポンシブ調整（縦長タブレット等）
+=========================================================== */
+@media (max-aspect-ratio: 4/5) {
+  .qscreen {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .qscreen__left {
+    flex: 0 1 38%;
+    min-height: 0;
+  }
+  .qscreen__right {
+    flex: 1 1 58%;
+    min-height: 0;
+  }
+  .timer {
+    width: clamp(56px, 14vw, 72px);
+    height: clamp(56px, 14vw, 72px);
+  }
+  .timer__num {
+    font-size: clamp(1rem, 3.5vw, 1.3rem);
+  }
+  .qimage-wrap {
+    margin-top: clamp(60px, 16vw, 80px);
+  }
+  .answer-box {
+    height: clamp(48px, 6vh, 64px);
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+  }
+  .keypad {
+    gap: 3px;
+  }
+  .key {
+    font-size: clamp(0.85rem, 3vw, 1.1rem);
+  }
+}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>謎解き ― 脱出の扉</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ 画面1: 待機画面 ============ -->
+<section id="screen-wait" class="screen screen--active">
+  <div class="wait__bg-rune" aria-hidden="true">謎</div>
+  <div class="wait__content">
+    <p class="wait__eyebrow">ENTER THE ROOM</p>
+    <h1 class="wait__title">挑戦人数を<br>選択せよ</h1>
+    <p class="wait__sub">人数に応じて制限時間が変わります</p>
+
+    <div class="wait__doors">
+      <button class="door" data-players="1" data-time="90">
+        <span class="door__frame">
+          <span class="door__num">1</span>
+        </span>
+        <span class="door__label">1人</span>
+        <span class="door__time">制限時間 90秒</span>
+      </button>
+
+      <button class="door" data-players="2" data-time="75">
+        <span class="door__frame">
+          <span class="door__num">2</span>
+        </span>
+        <span class="door__label">2人</span>
+        <span class="door__time">制限時間 75秒</span>
+      </button>
+
+      <button class="door" data-players="3" data-time="60">
+        <span class="door__frame">
+          <span class="door__num">3</span>
+        </span>
+        <span class="door__label">3人</span>
+        <span class="door__time">制限時間 60秒</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 画面2: 問題画面 ============ -->
+<section id="screen-question" class="screen">
+  <div class="qscreen">
+
+    <div class="qscreen__left">
+      <div class="timer" id="timer">
+        <svg class="timer__ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="timer__ring-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="timer__ring-fg" id="timerRing" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <span class="timer__num" id="timerNum">90</span>
+      </div>
+
+      <div class="qimage-wrap">
+        <img id="questionImage" class="qimage" src="no1/question1.jpg" alt="謎解き問題">
+      </div>
+    </div>
+
+    <div class="qscreen__right">
+      <div class="answer-box" id="answerBox">
+        <span class="answer-box__placeholder" id="answerPlaceholder">こたえを にゅうりょく</span>
+        <span class="answer-box__text" id="answerText"></span>
+        <span class="answer-box__caret" aria-hidden="true"></span>
+      </div>
+
+      <div class="keypad" id="keypad">
+        <!-- JSで生成 -->
+      </div>
+    </div>
+
+    <div class="wrongmark" id="wrongMark" aria-hidden="true">
+      <span class="wrongmark__x">×</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 画面3: 正解画面 ============ -->
+<section id="screen-correct" class="screen result result--correct">
+  <div class="result__inner">
+    <span class="result__mark">○</span>
+    <p class="result__text">正解<br>次の部屋に進め</p>
+  </div>
+</section>
+
+<!-- ============ 画面4: 脱落画面 ============ -->
+<section id="screen-fail" class="screen result result--fail">
+  <div class="result__inner">
+    <p class="result__text">脱落<br>直ちに退出せよ</p>
+  </div>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
